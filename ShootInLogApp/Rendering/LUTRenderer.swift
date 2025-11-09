@@ -58,17 +58,25 @@ final class LUTRenderer {
     }
 
     func loadLUTIfNeeded(for mode: LUTMode) {
-        guard mode != .off else { self.lutTexture = nil; self.lutSize = 0; return }
-        let name = mode == .subject ? "Subject" : "Scenery"
-        if let tex = lutTexture, lutMode == mode { return }
-        do {
-            let (tex, size) = try LUT3DLoader.loadCubeTexture(device: device, resourceName: name)
-            self.lutTexture = tex
-            self.lutSize = size
-        } catch {
-            self.lutTexture = nil
-            self.lutSize = 0
+        guard mode != .off else { self.lutTexture = nil; self.lutSize = 0; self.lutMode = .off; return }
+        if let _ = lutTexture, lutMode == mode { return }
+        let primaryName = (mode == .subject) ? "Subject" : "Scenery"
+        let fallbackNames = (mode == .subject) ? ["subject"] : ["Scenery", "Sceneray", "scenery", "sceneray"]
+
+        func attemptLoad(_ name: String) -> Bool {
+            do {
+                let (tex, size) = try LUT3DLoader.loadCubeTexture(device: device, resourceName: name)
+                self.lutTexture = tex
+                self.lutSize = size
+                return true
+            } catch { return false }
         }
+
+        var loaded = attemptLoad(primaryName)
+        if !loaded {
+            for alt in fallbackNames where !loaded { loaded = attemptLoad(alt) }
+        }
+        if !loaded { self.lutTexture = nil; self.lutSize = 0 }
         self.lutMode = mode
     }
 
