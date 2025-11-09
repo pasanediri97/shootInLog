@@ -38,8 +38,26 @@ final class CaptureManager: NSObject, ObservableObject {
     }
 
     private func configure() {
-        sessionQueue.async { [weak self] in
-            self?.setupSession()
+        // Request permissions first, then configure session
+        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            guard let self else { return }
+            if !granted {
+                self.publishError("Camera access denied. Enable in Settings.")
+                return
+            }
+            AVAudioSession.sharedInstance().requestRecordPermission { _ in
+                self.sessionQueue.async {
+                    // Configure audio session (non-fatal if fails)
+                    let audio = AVAudioSession.sharedInstance()
+                    do {
+                        try audio.setCategory(.playAndRecord, mode: .videoRecording, options: [.defaultToSpeaker])
+                        try audio.setActive(true)
+                    } catch { /* ignore */ }
+                    self.setupSession()
+                    if !self.session.isRunning { self.session.startRunning() }
+                    DispatchQueue.main.async { self.isSessionRunning = true }
+                }
+            }
         }
     }
 
@@ -83,7 +101,7 @@ final class CaptureManager: NSObject, ObservableObject {
         videoOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
-        videoOutput.alwaysDiscardsLateVideoFrames = false
+        videoOutput.alwaysDiscardsLateVideoFrames = true
         if session.canAddOutput(videoOutput) { session.addOutput(videoOutput) }
         videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
         if let connection = videoOutput.connection(with: .video) {

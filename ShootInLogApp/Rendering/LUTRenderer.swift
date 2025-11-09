@@ -160,6 +160,7 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
     func draw(in view: MTKView) {
         guard let previewTex = previewTexture,
               let rpd = view.currentRenderPassDescriptor,
+              let drawable = view.currentDrawable,
               let cmd = commandQueue.makeCommandBuffer(),
               let enc = cmd.makeRenderCommandEncoder(descriptor: rpd) else { return }
         enc.setRenderPipelineState(blitRenderPSO)
@@ -174,6 +175,7 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
         enc.setFragmentTexture(previewTex, index: 0)
         enc.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         enc.endEncoding()
-        cmd.commit() // MTKView presents automatically
+        cmd.present(drawable)
+        cmd.commit()
     }
 }
