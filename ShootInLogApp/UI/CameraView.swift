@@ -130,9 +130,10 @@ struct MetalPreviewContainer: UIViewRepresentable {
 
     func makeUIView(context: Context) -> MTKView {
         let view = MTKView(frame: .zero, device: MTLCreateSystemDefaultDevice())
-        view.isPaused = true
-        view.enableSetNeedsDisplay = true
+        view.isPaused = false
+        view.enableSetNeedsDisplay = false
         view.framebufferOnly = false
+        view.preferredFramesPerSecond = 30
         DispatchQueue.main.async { onReady(view) }
         return view
     }

@@ -76,10 +76,10 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
     // MARK: - FrameConsumer
     func consumeVideo(sampleBuffer: CMSampleBuffer) {
         let mode = lutMode
-        if let outPB = renderer.process(sampleBuffer: sampleBuffer, mode: mode) {
-            if isRecording {
-                let ts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                recorder.appendVideo(pixelBuffer: outPB, with: ts)
+        renderer.processAsync(sampleBuffer: sampleBuffer, mode: mode) { [weak self] outPB, ts in
+            guard let self else { return }
+            if self.isRecording {
+                self.recorder.appendVideo(pixelBuffer: outPB, with: ts)
             }
         }
     }
