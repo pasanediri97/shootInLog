@@ -26,6 +26,7 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
         guard let dev = MTLCreateSystemDefaultDevice(), let q = dev.makeCommandQueue() else { return nil }
         self.device = dev
         self.commandQueue = q
+        super.init()
         self.previewView = previewView
         if let v = self.previewView {
             v.device = dev
@@ -36,17 +37,17 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
             v.delegate = self
         }
 
-        let lib = try? dev.makeDefaultLibrary(bundle: .main)
+        guard let lib = try? dev.makeDefaultLibrary(bundle: .main),
+              let computeFunc = lib.makeFunction(name: "applyLUT"),
+              let vtx = lib.makeFunction(name: "vertexPassthrough"),
+              let frag = lib.makeFunction(name: "fragmentTextured") else { return nil }
         do {
-            let computeFunc = lib?.makeFunction(name: "applyLUT")
-            computePSO = try dev.makeComputePipelineState(function: computeFunc!)
+            computePSO = try dev.makeComputePipelineState(function: computeFunc)
 
-            let vtx = lib?.makeFunction(name: "vertexPassthrough")
-            let frag = lib?.makeFunction(name: "fragmentTextured")
             let desc = MTLRenderPipelineDescriptor()
             desc.vertexFunction = vtx
             desc.fragmentFunction = frag
-            desc.colorAttachments[0].pixelFormat = previewView?.colorPixelFormat ?? .bgra8Unorm
+            desc.colorAttachments[0].pixelFormat = self.previewView?.colorPixelFormat ?? .bgra8Unorm
             blitRenderPSO = try dev.makeRenderPipelineState(descriptor: desc)
         } catch {
             return nil
@@ -149,7 +150,7 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
     private func ensurePreviewTexture(width: Int, height: Int) {
         if let tex = previewTexture, tex.width == width && tex.height == height { return }
         let desc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
-        desc.usage = [.shaderRead, .shaderWrite, .blitDestination, .blitSource]
+        desc.usage = [.shaderRead, .shaderWrite]
         previewTexture = device.makeTexture(descriptor: desc)
     }
 
