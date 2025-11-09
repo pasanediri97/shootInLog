@@ -145,7 +145,9 @@ struct InfoSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("How to Use")
                 .font(.title2).bold()
-            Text("\u2022 App opens directly to Log video mode.\n\u2022 Choose a LUT: Off, Subject, or Scenery.\n\u2022 Tap record to capture 4K video. LUT is applied in real time to preview and recording.\n\u2022 Use zoom steps for quick lens switching (0.5x, 1x, 2x, 4x, 8x).\n\u2022 Video saves to your Photos after stopping.")
+            Text("\u{2022} App opens directly to Log video mode.\n\u{2022} Choose a LUT: Off, Subject, or Scenery.\n\u{2022} Tap record to capture 4K video. LUT is applied in real time to preview and recording.\n\u{2022} Use zoom steps for quick lens switching (0.5x, 1x, 2x, 4x, 8x).\n\u{2022} Video saves to your Photos after stopping.")
+
+
             Link(destination: URL(string: "https://youtu.be/your-tutorial-id")!) {
                 Label("Watch Tutorial on YouTube", systemImage: "play.rectangle")
                     .font(.headline)

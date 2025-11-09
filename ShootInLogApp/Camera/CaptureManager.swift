@@ -183,13 +183,11 @@ final class CaptureManager: NSObject, ObservableObject {
         for format in device.formats {
             let desc = format.formatDescription
             let dims = CMVideoFormatDescriptionGetDimensions(desc)
-            // Prefer 3840x2160 first
             if dims.width == 3840 && dims.height == 2160 {
                 bestFormat = format
                 bestDimensions = dims
                 break
             }
-            // Track highest area as fallback
             if dims.width * dims.height > bestDimensions.width * bestDimensions.height {
                 bestFormat = format
                 bestDimensions = dims
@@ -198,18 +196,31 @@ final class CaptureManager: NSObject, ObservableObject {
 
         if let chosen = bestFormat {
             device.activeFormat = chosen
+
             // Choose a common frame rate (30 fps) if supported
-            if let range = chosen.videoSupportedFrameRateRanges.first, range.minFrameRate <= 30 && range.maxFrameRate >= 30 {
+            if let range = chosen.videoSupportedFrameRateRanges.first,
+               range.minFrameRate <= 30 && range.maxFrameRate >= 30 {
                 device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
                 device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
             }
-            // Prefer HDR if device supports
-            if #available(iOS 17.0, *), chosen.isVideoHDRSupported {
-                device.isVideoHDREnabled = true
+
+            // HDR: if running iOS 17+, disable automatic HDR before forcing the HDR flag.
+            if #available(iOS 17.0, *) {
+                if chosen.isVideoHDRSupported {
+                    // If you want the system to continue to decide, DO NOT change these properties.
+                    // If you want to force HDR on/off, first turn off automatic adjustment:
+                    device.automaticallyAdjustsVideoHDREnabled = false
+                    device.isVideoHDREnabled = true
+                } else {
+                    // Ensure automatic control is enabled if chosen format doesn't support HDR
+                    device.automaticallyAdjustsVideoHDREnabled = true
+                    device.isVideoHDREnabled = false
+                }
             }
         }
     }
 
+    
     private func updateActiveResolutionDescription() {
         guard let device = currentVideoDevice else { return }
         let dims = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
