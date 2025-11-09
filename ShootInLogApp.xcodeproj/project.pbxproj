@@ -1,0 +1,569 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		40A280682EC046A30059BA58 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 40A280522EC0469F0059BA58 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 40A280592EC0469F0059BA58;
+			remoteInfo = ShootInLogApp;
+		};
+		40A280722EC046A30059BA58 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 40A280522EC0469F0059BA58 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 40A280592EC0469F0059BA58;
+			remoteInfo = ShootInLogApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		40A2805A2EC046A00059BA58 /* ShootInLogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShootInLogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		40A280672EC046A30059BA58 /* ShootInLogAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShootInLogAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		40A280712EC046A30059BA58 /* ShootInLogAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShootInLogAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		40A2805C2EC046A00059BA58 /* ShootInLogApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ShootInLogApp;
+			sourceTree = "<group>";
+		};
+		40A2806A2EC046A30059BA58 /* ShootInLogAppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ShootInLogAppTests;
+			sourceTree = "<group>";
+		};
+		40A280742EC046A30059BA58 /* ShootInLogAppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ShootInLogAppUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		40A280572EC0469F0059BA58 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		40A280642EC046A30059BA58 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		40A2806E2EC046A30059BA58 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		40A280512EC0469F0059BA58 = {
+			isa = PBXGroup;
+			children = (
+				40A2805C2EC046A00059BA58 /* ShootInLogApp */,
+				40A2806A2EC046A30059BA58 /* ShootInLogAppTests */,
+				40A280742EC046A30059BA58 /* ShootInLogAppUITests */,
+				40A2805B2EC046A00059BA58 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		40A2805B2EC046A00059BA58 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				40A2805A2EC046A00059BA58 /* ShootInLogApp.app */,
+				40A280672EC046A30059BA58 /* ShootInLogAppTests.xctest */,
+				40A280712EC046A30059BA58 /* ShootInLogAppUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		40A280592EC0469F0059BA58 /* ShootInLogApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 40A2807B2EC046A30059BA58 /* Build configuration list for PBXNativeTarget "ShootInLogApp" */;
+			buildPhases = (
+				40A280562EC0469F0059BA58 /* Sources */,
+				40A280572EC0469F0059BA58 /* Frameworks */,
+				40A280582EC0469F0059BA58 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				40A2805C2EC046A00059BA58 /* ShootInLogApp */,
+			);
+			name = ShootInLogApp;
+			packageProductDependencies = (
+			);
+			productName = ShootInLogApp;
+			productReference = 40A2805A2EC046A00059BA58 /* ShootInLogApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		40A280662EC046A30059BA58 /* ShootInLogAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 40A2807E2EC046A30059BA58 /* Build configuration list for PBXNativeTarget "ShootInLogAppTests" */;
+			buildPhases = (
+				40A280632EC046A30059BA58 /* Sources */,
+				40A280642EC046A30059BA58 /* Frameworks */,
+				40A280652EC046A30059BA58 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				40A280692EC046A30059BA58 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				40A2806A2EC046A30059BA58 /* ShootInLogAppTests */,
+			);
+			name = ShootInLogAppTests;
+			packageProductDependencies = (
+			);
+			productName = ShootInLogAppTests;
+			productReference = 40A280672EC046A30059BA58 /* ShootInLogAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		40A280702EC046A30059BA58 /* ShootInLogAppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 40A280812EC046A30059BA58 /* Build configuration list for PBXNativeTarget "ShootInLogAppUITests" */;
+			buildPhases = (
+				40A2806D2EC046A30059BA58 /* Sources */,
+				40A2806E2EC046A30059BA58 /* Frameworks */,
+				40A2806F2EC046A30059BA58 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				40A280732EC046A30059BA58 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				40A280742EC046A30059BA58 /* ShootInLogAppUITests */,
+			);
+			name = ShootInLogAppUITests;
+			packageProductDependencies = (
+			);
+			productName = ShootInLogAppUITests;
+			productReference = 40A280712EC046A30059BA58 /* ShootInLogAppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		40A280522EC0469F0059BA58 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					40A280592EC0469F0059BA58 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					40A280662EC046A30059BA58 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 40A280592EC0469F0059BA58;
+					};
+					40A280702EC046A30059BA58 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 40A280592EC0469F0059BA58;
+					};
+				};
+			};
+			buildConfigurationList = 40A280552EC0469F0059BA58 /* Build configuration list for PBXProject "ShootInLogApp" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 40A280512EC0469F0059BA58;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 40A2805B2EC046A00059BA58 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				40A280592EC0469F0059BA58 /* ShootInLogApp */,
+				40A280662EC046A30059BA58 /* ShootInLogAppTests */,
+				40A280702EC046A30059BA58 /* ShootInLogAppUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		40A280582EC0469F0059BA58 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		40A280652EC046A30059BA58 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		40A2806F2EC046A30059BA58 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		40A280562EC0469F0059BA58 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		40A280632EC046A30059BA58 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		40A2806D2EC046A30059BA58 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		40A280692EC046A30059BA58 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 40A280592EC0469F0059BA58 /* ShootInLogApp */;
+			targetProxy = 40A280682EC046A30059BA58 /* PBXContainerItemProxy */;
+		};
+		40A280732EC046A30059BA58 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 40A280592EC0469F0059BA58 /* ShootInLogApp */;
+			targetProxy = 40A280722EC046A30059BA58 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		40A280792EC046A30059BA58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		40A2807A2EC046A30059BA58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		40A2807C2EC046A30059BA58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to record Log video.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone access is required to record audio.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow saving recorded videos to your Photo Library.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.galactic.ShootInLogApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		40A2807D2EC046A30059BA58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to record Log video.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone access is required to record audio.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow saving recorded videos to your Photo Library.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.galactic.ShootInLogApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		40A2807F2EC046A30059BA58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.galactic.ShootInLogAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShootInLogApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShootInLogApp";
+			};
+			name = Debug;
+		};
+		40A280802EC046A30059BA58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.galactic.ShootInLogAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShootInLogApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShootInLogApp";
+			};
+			name = Release;
+		};
+		40A280822EC046A30059BA58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.galactic.ShootInLogAppUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ShootInLogApp;
+			};
+			name = Debug;
+		};
+		40A280832EC046A30059BA58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USJ398XP5K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.galactic.ShootInLogAppUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ShootInLogApp;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		40A280552EC0469F0059BA58 /* Build configuration list for PBXProject "ShootInLogApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				40A280792EC046A30059BA58 /* Debug */,
+				40A2807A2EC046A30059BA58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		40A2807B2EC046A30059BA58 /* Build configuration list for PBXNativeTarget "ShootInLogApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				40A2807C2EC046A30059BA58 /* Debug */,
+				40A2807D2EC046A30059BA58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		40A2807E2EC046A30059BA58 /* Build configuration list for PBXNativeTarget "ShootInLogAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				40A2807F2EC046A30059BA58 /* Debug */,
+				40A280802EC046A30059BA58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		40A280812EC046A30059BA58 /* Build configuration list for PBXNativeTarget "ShootInLogAppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				40A280822EC046A30059BA58 /* Debug */,
+				40A280832EC046A30059BA58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 40A280522EC0469F0059BA58 /* Project object */;
+}
