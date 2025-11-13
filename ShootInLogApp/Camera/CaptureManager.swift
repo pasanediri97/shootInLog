@@ -101,6 +101,20 @@ final class CaptureManager: NSObject, ObservableObject {
         // Select best format FIRST, then check compatibility
         selectBestFormatAndFrameRate(device: videoDevice)
         
+        // Configure autofocus for better responsiveness
+        do {
+            try videoDevice.lockForConfiguration()
+            if videoDevice.isFocusModeSupported(.continuousAutoFocus) {
+                videoDevice.focusMode = .continuousAutoFocus
+            }
+            if videoDevice.isExposureModeSupported(.continuousAutoExposure) {
+                videoDevice.exposureMode = .continuousAutoExposure
+            }
+            videoDevice.unlockForConfiguration()
+        } catch {
+            print("❌ Unable to configure focus: \(error)")
+        }
+        
         videoOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
@@ -191,16 +205,32 @@ final class CaptureManager: NSObject, ObservableObject {
     }
 
     func setBackCameraZoomStep(_ step: CGFloat) {
-        guard let device = currentVideoDevice, device.position == .back else { return }
-        let minZoom = device.minAvailableVideoZoomFactor
-        let maxZoom = device.maxAvailableVideoZoomFactor
-        let clamped = max(minZoom, min(maxZoom, step))
-        do {
-            try device.lockForConfiguration()
-            device.ramp(toVideoZoomFactor: clamped, withRate: 5.0)
-            device.unlockForConfiguration()
-        } catch {
-            // ignore
+        sessionQueue.async { [weak self] in
+            guard let self = self,
+                  let device = self.currentVideoDevice,
+                  device.position == .back else { return }
+            
+            let minZoom = device.minAvailableVideoZoomFactor
+            let maxZoom = device.maxAvailableVideoZoomFactor
+            
+            print("📹 Zoom request: \(step)x, device range: \(minZoom)-\(maxZoom)")
+            
+            // Clamp to device capabilities
+            let clamped = max(minZoom, min(maxZoom, step))
+            
+            if clamped != step {
+                print("⚠️ Zoom clamped from \(step)x to \(clamped)x")
+            }
+            
+            do {
+                try device.lockForConfiguration()
+                // Use videoZoomFactor for instant zoom (no ramping for better UX)
+                device.videoZoomFactor = clamped
+                device.unlockForConfiguration()
+                print("✅ Zoom set to \(clamped)x")
+            } catch {
+                print("❌ Zoom failed: \(error)")
+            }
         }
     }
 
