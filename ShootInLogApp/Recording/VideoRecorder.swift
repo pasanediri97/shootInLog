@@ -92,6 +92,15 @@ final class VideoRecorder {
     }
 
     func appendAudio(sampleBuffer: CMSampleBuffer) {
+        guard let writer = assetWriter else { return }
+        
+        // Only append audio after the session has started
+        // Audio samples often arrive before video, so we need to check writer status
+        guard writer.status == .writing else {
+            // Session hasn't started yet (waiting for first video frame)
+            return
+        }
+        
         guard let aIn = audioInput, aIn.isReadyForMoreMediaData else { return }
         aIn.append(sampleBuffer)
     }
