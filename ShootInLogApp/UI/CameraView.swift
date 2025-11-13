@@ -157,7 +157,7 @@ struct CameraView: View {
             // Zoom controls
             if !model.usingFrontCamera && model.isLogCompatible {
                 HStack(spacing: 8) {
-                    ForEach([0.5, 1.0, 2.0, 4.0, 8.0], id: \.self) { z in
+                    ForEach([ 1.0, 2.0, 4.0, 8.0], id: \.self) { z in
                         Button(action: {
                             selectedZoom = z
                             model.setZoomStep(CGFloat(z))

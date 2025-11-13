@@ -60,7 +60,9 @@ final class VideoRecorder {
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
         vIn.expectsMediaDataInRealTime = true
         currentOrientation = orientation
-        vIn.transform = transform(for: orientation)
+        // Don't apply transform - save video in natural camera orientation
+        // This prevents aspect ratio issues and "shrinked" appearance
+        vIn.transform = .identity
         if writer.canAdd(vIn) { writer.add(vIn) }
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: vIn, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA),
@@ -123,29 +125,8 @@ final class VideoRecorder {
         }
     }
 
-    private func transform(for orientation: AVCaptureVideoOrientation) -> CGAffineTransform {
-        // For video recording, we need proper transform to maintain aspect ratio
-        // Portrait modes need rotation to display correctly
-        let transform: CGAffineTransform
-        switch orientation {
-        case .portrait:
-            // Rotate 90° clockwise for portrait
-            transform = CGAffineTransform(rotationAngle: .pi / 2)
-        case .portraitUpsideDown:
-            // Rotate 90° counter-clockwise for upside-down portrait
-            transform = CGAffineTransform(rotationAngle: -.pi / 2)
-        case .landscapeLeft:
-            // Rotate 180° for landscape left
-            transform = CGAffineTransform(rotationAngle: .pi)
-        case .landscapeRight:
-            // No rotation needed for landscape right
-            transform = .identity
-        @unknown default:
-            transform = .identity
-        }
-        print("🎥 Video transform for \(orientation.rawValue): rotation = \(transform)")
-        return transform
-    }
+    // Transform removed - videos are saved in their natural camera orientation
+    // to prevent aspect ratio issues
 
     private func saveToPhotos(url: URL) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
