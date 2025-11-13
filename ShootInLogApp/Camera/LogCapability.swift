@@ -1,41 +1,44 @@
 import AVFoundation
 import Foundation
 
-/// Detects whether the current device can shoot Apple Log video.
-/// Apple Log requires:
-/// - iOS 17.0 or later
-/// - HDR video support
-/// - Wide color gamut support (P3_D65 or HLG_BT2020)
+/// Detects whether the current device can shoot Log-style video with wide dynamic range.
+/// Uses a permissive approach - if the device has HDR enabled on iOS 17+, we enable Log mode
 enum LogCapability {
     static func isDeviceLogCapable(activeDevice: AVCaptureDevice?) -> Bool {
-        // Apple Log requires iOS 17+
+        print("🔍 === CHECKING LOG CAPABILITY ===")
+        
+        // Require iOS 17+ for modern HDR/Log features
         guard #available(iOS 17.0, *) else {
+            print("❌ iOS version < 17.0 - Log requires iOS 17+")
             return false
         }
+        print("✅ iOS 17.0+ ✓")
         
         guard let device = activeDevice ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            print("❌ No camera device found")
             return false
         }
+        print("✅ Camera device: \(device.localizedName)")
 
-        // Check format capabilities for Apple Log support
         let format = device.activeFormat
+        let hdrSupported = format.isVideoHDRSupported
+        print("📹 Format HDR Support: \(hdrSupported)")
         
-        // Must support HDR video - this is the key indicator
-        guard format.isVideoHDRSupported else {
-            return false
+        // Check if HDR is actually enabled (not just supported)
+        let hdrEnabled = device.isVideoHDREnabled
+        print("📹 HDR Actually Enabled: \(hdrEnabled)")
+        
+        // Simple check: If HDR is supported on the format, we can do Log-like recording
+        // The CaptureManager will have already enabled HDR if supported
+        if hdrSupported || hdrEnabled {
+            print("✅ LOG CAPABLE - Reason: HDR is supported/enabled")
+            print("🔍 ================================")
+            return true
         }
         
-        // Check for wide color gamut support
-        let colorSpaces = format.supportedColorSpaces
-        let hasWideColorGamut = colorSpaces.contains(.HLG_BT2020) || colorSpaces.contains(.P3_D65)
-        
-        guard hasWideColorGamut else {
-            return false
-        }
-        
-        // If the device has HDR and wide color support on iOS 17+, it can do Log-like video
-        // This is more reliable than model checking as it directly checks capabilities
-        return true
+        print("❌ NOT LOG CAPABLE - HDR not available")
+        print("🔍 ================================")
+        return false
     }
 
     static func platformIdentifier() -> String {
@@ -49,4 +52,3 @@ enum LogCapability {
         return identifier
     }
 }
-

@@ -114,12 +114,17 @@ final class CaptureManager: NSObject, ObservableObject {
             audioOutput.setSampleBufferDelegate(self, queue: sessionQueue)
         }
 
-        // Commit configuration FIRST, then check compatibility
+        // Commit configuration FIRST
         session.commitConfiguration()
         
-        // Check Log compatibility after device is fully configured
-        updateLogCompatibility(for: videoDevice)
+        // Update resolution description
         updateActiveResolutionDescription()
+        
+        // Check Log compatibility after a brief delay to ensure settings are applied
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self else { return }
+            self.updateLogCompatibility(for: videoDevice)
+        }
     }
 
     private func defaultVideoDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
@@ -171,9 +176,14 @@ final class CaptureManager: NSObject, ObservableObject {
             selectBestFormatAndFrameRate(device: newDevice)
             configureConnection(videoOutput.connection(with: .video))
             session.commitConfiguration()
-            updateLogCompatibility(for: newDevice)
             DispatchQueue.main.async { [weak self] in self?.usingFrontCamera = (newPosition == .front) }
             updateActiveResolutionDescription()
+            
+            // Check compatibility after delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self else { return }
+                self.updateLogCompatibility(for: newDevice)
+            }
         } catch {
             session.commitConfiguration()
             publishError("Switch camera failed: \(error.localizedDescription)")
@@ -315,18 +325,42 @@ final class CaptureManager: NSObject, ObservableObject {
         let format = device.activeFormat
         
         // Debug info
+        print("🎥 === LOG CAPABILITY CHECK ===")
         print("🎥 Device: \(device.deviceType.rawValue)")
         print("🎥 Format HDR Supported: \(format.isVideoHDRSupported)")
-        print("🎥 Color Spaces: \(format.supportedColorSpaces)")
+        
+        // Print color spaces properly
+        let colorSpaceNames = format.supportedColorSpaces.map { space -> String in
+            switch space {
+            case .sRGB: return "sRGB"
+            case .P3_D65: return "P3_D65"
+            case .HLG_BT2020: return "HLG_BT2020"
+            case .AppleLog: return "AppleLog"
+            @unknown default: return "Unknown(\(space.rawValue))"
+            }
+        }
+        print("🎥 Supported Color Spaces: \(colorSpaceNames.joined(separator: ", "))")
+        
         if #available(iOS 17.0, *) {
             print("🎥 HDR Enabled: \(device.isVideoHDREnabled)")
-            print("🎥 Active Color Space: \(device.activeColorSpace.rawValue)")
+            let activeColorName: String
+            switch device.activeColorSpace {
+            case .sRGB: activeColorName = "sRGB"
+            case .P3_D65: activeColorName = "P3_D65"
+            case .HLG_BT2020: activeColorName = "HLG_BT2020"
+            case .AppleLog: activeColorName = "AppleLog"
+            @unknown default: activeColorName = "Unknown(\(device.activeColorSpace.rawValue))"
+            }
+            print("🎥 Active Color Space: \(activeColorName)")
         }
         
         let compatible = LogCapability.isDeviceLogCapable(activeDevice: device)
-        print("🎥 Log Compatible: \(compatible)")
+        print("🎥 Final Log Compatible: \(compatible)")
+        print("🎥 =============================")
         
-        DispatchQueue.main.async { [weak self] in self?.isLogCompatible = compatible }
+        DispatchQueue.main.async { [weak self] in
+            self?.isLogCompatible = compatible
+        }
     }
 
     private func updateActiveResolutionDescription() {
