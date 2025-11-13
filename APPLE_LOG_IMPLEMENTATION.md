@@ -97,12 +97,61 @@ Recorded videos are in Apple Log format (.mov with ProRes 422 HQ). To edit:
 - **Future-proof** footage for re-grading
 - **No banding** in gradients after color correction
 
+## Troubleshooting
+
+### "Log Video Not Supported" on iPhone 15 Pro
+
+If you see this alert on a compatible device, check the following:
+
+1. **iOS Version**: Ensure you're running iOS 17.0 or later
+   - Go to Settings > General > About
+   - Update if necessary
+
+2. **ProRes Settings**: Enable ProRes in Camera settings
+   - Go to Settings > Camera > Formats
+   - Enable "Apple ProRes"
+   - This is required for Log recording
+
+3. **Check Console Logs**: The app outputs debug information:
+   ```
+   🎥 Device: [device type]
+   🎥 Format HDR Supported: true/false
+   🎥 Color Spaces: [supported spaces]
+   🎥 HDR Enabled: true/false
+   🎥 Active Color Space: [color space]
+   🎥 Log Compatible: true/false
+   ```
+
+4. **Storage Space**: ProRes requires significant storage
+   - Ensure at least 5GB free space
+   - ProRes files are 1-2GB per minute
+
+5. **Camera Permissions**: Verify camera access is granted
+   - Settings > Privacy & Security > Camera
+   - Enable access for the app
+
+### Common Issues
+
+**HDR Not Enabled**: If format supports HDR but it's not enabled:
+- The app will attempt to enable it automatically
+- Check if any other app is using the camera
+- Restart the app
+
+**No Wide Color Gamut**: If color spaces don't include HLG_BT2020 or P3_D65:
+- This indicates older hardware
+- iPhone 15 Pro should always support these
+
+**Format Selection Failed**: If no HDR format is found:
+- The app will fall back to highest available resolution
+- Log recording will not be available
+
 ## Limitations
 
 - Larger file sizes (ProRes is uncompressed/minimally compressed)
 - Requires color grading for final output
 - Only available on iPhone 15 Pro and newer Pro models
 - Requires iOS 17.0 or later
+- ProRes must be enabled in system Camera settings
 
 ## Comparison: Standard vs Apple Log
 
@@ -116,4 +165,16 @@ Recorded videos are in Apple Log format (.mov with ProRes 422 HQ). To edit:
 
 ---
 
-**Note**: This implementation follows Apple's official guidelines for ProRes and Log video recording using AVFoundation.
+## Debug Information
+
+The app now includes extensive logging to help diagnose issues:
+
+- Device type and capabilities
+- HDR support status
+- Available color spaces
+- Active format settings
+- Log compatibility check results
+
+Check Xcode console output when running on a device to see detailed capability information.
+
+**Note**: This implementation follows Apple's official guidelines for ProRes and HDR video recording using AVFoundation. The app dynamically detects device capabilities rather than relying solely on model identifiers for maximum compatibility.

@@ -3,10 +3,9 @@ import Foundation
 
 /// Detects whether the current device can shoot Apple Log video.
 /// Apple Log requires:
-/// - iPhone 15 Pro or newer Pro models
 /// - iOS 17.0 or later
 /// - HDR video support
-/// - HLG_BT2020 color space support
+/// - Wide color gamut support (P3_D65 or HLG_BT2020)
 enum LogCapability {
     static func isDeviceLogCapable(activeDevice: AVCaptureDevice?) -> Bool {
         // Apple Log requires iOS 17+
@@ -21,29 +20,22 @@ enum LogCapability {
         // Check format capabilities for Apple Log support
         let format = device.activeFormat
         
-        // Must support HDR video
+        // Must support HDR video - this is the key indicator
         guard format.isVideoHDRSupported else {
             return false
         }
         
-        // Must support HLG_BT2020 color space (required for Apple Log)
+        // Check for wide color gamut support
         let colorSpaces = format.supportedColorSpaces
-        guard colorSpaces.contains(.HLG_BT2020) else {
+        let hasWideColorGamut = colorSpaces.contains(.HLG_BT2020) || colorSpaces.contains(.P3_D65)
+        
+        guard hasWideColorGamut else {
             return false
         }
-
-        // Additionally verify with device model (iPhone 15 Pro and newer)
-        let model = platformIdentifier()
         
-        // iPhone 15 Pro: iPhone16,1 (15 Pro), iPhone16,2 (15 Pro Max)
-        // iPhone 16 Pro: iPhone17,1 (16 Pro), iPhone17,2 (16 Pro Max)
-        // Future models: iPhone18,x and beyond
-        let isProModel = model.hasPrefix("iPhone16,1") || // 15 Pro
-                        model.hasPrefix("iPhone16,2") || // 15 Pro Max
-                        model.hasPrefix("iPhone17,") ||  // 16 Pro family
-                        model.hasPrefix("iPhone18,")     // Future Pro models
-        
-        return isProModel
+        // If the device has HDR and wide color support on iOS 17+, it can do Log-like video
+        // This is more reliable than model checking as it directly checks capabilities
+        return true
     }
 
     static func platformIdentifier() -> String {

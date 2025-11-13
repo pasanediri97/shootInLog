@@ -98,8 +98,9 @@ final class CaptureManager: NSObject, ObservableObject {
             }
         }
 
+        // Select best format FIRST, then check compatibility
         selectBestFormatAndFrameRate(device: videoDevice)
-
+        
         videoOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
@@ -113,8 +114,11 @@ final class CaptureManager: NSObject, ObservableObject {
             audioOutput.setSampleBufferDelegate(self, queue: sessionQueue)
         }
 
-        updateLogCompatibility(for: videoDevice)
+        // Commit configuration FIRST, then check compatibility
         session.commitConfiguration()
+        
+        // Check Log compatibility after device is fully configured
+        updateLogCompatibility(for: videoDevice)
         updateActiveResolutionDescription()
     }
 
@@ -218,54 +222,110 @@ final class CaptureManager: NSObject, ObservableObject {
 
     // MARK: - Formats & metadata
     private func selectBestFormatAndFrameRate(device: AVCaptureDevice) {
-        do { try device.lockForConfiguration() } catch { return }
+        do { try device.lockForConfiguration() } catch {
+            print("❌ Failed to lock device for configuration")
+            return
+        }
         defer { device.unlockForConfiguration() }
 
+        // Find the best HDR-capable format, preferring 4K
         var bestFormat: AVCaptureDevice.Format?
         var bestDimensions = CMVideoDimensions(width: 0, height: 0)
+        
+        // First pass: look for 4K HDR format
         for format in device.formats {
             let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-            if dims.width == 3840 && dims.height == 2160 {
+            
+            // Prefer 4K resolution with HDR support
+            if dims.width == 3840 && dims.height == 2160 && format.isVideoHDRSupported {
                 bestFormat = format
                 bestDimensions = dims
+                print("✅ Found 4K HDR format")
                 break
             }
-            if dims.width * dims.height > bestDimensions.width * bestDimensions.height {
-                bestFormat = format
-                bestDimensions = dims
+        }
+        
+        // Second pass: if no 4K HDR, find highest resolution with HDR
+        if bestFormat == nil {
+            for format in device.formats where format.isVideoHDRSupported {
+                let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                if dims.width * dims.height > bestDimensions.width * bestDimensions.height {
+                    bestFormat = format
+                    bestDimensions = dims
+                }
+            }
+        }
+        
+        // Third pass: if still no HDR format, use highest available
+        if bestFormat == nil {
+            for format in device.formats {
+                let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                if dims.width * dims.height > bestDimensions.width * bestDimensions.height {
+                    bestFormat = format
+                    bestDimensions = dims
+                }
             }
         }
 
-        if let chosen = bestFormat {
-            device.activeFormat = chosen
-            if let range = chosen.videoSupportedFrameRateRanges.first,
-               range.minFrameRate <= 30, range.maxFrameRate >= 30 {
-                let duration = CMTime(value: 1, timescale: 30)
-                device.activeVideoMinFrameDuration = duration
-                device.activeVideoMaxFrameDuration = duration
-            }
-            // Enable HDR and Apple Log for compatible devices (iOS 17+)
-            if #available(iOS 17.0, *) {
-                if chosen.isVideoHDRSupported {
-                    device.automaticallyAdjustsVideoHDREnabled = false
-                    device.isVideoHDREnabled = true
-                    
-                    // Prefer HLG BT.2020 color space for Apple Log compatibility
-                    if chosen.supportedColorSpaces.contains(.HLG_BT2020) {
-                        device.activeColorSpace = .HLG_BT2020
-                    } else if chosen.supportedColorSpaces.contains(.P3_D65) {
-                        device.activeColorSpace = .P3_D65
-                    }
-                } else {
-                    device.automaticallyAdjustsVideoHDREnabled = true
-                    device.isVideoHDREnabled = false
+        guard let chosen = bestFormat else {
+            print("❌ No suitable format found")
+            return
+        }
+        
+        // Set the format
+        device.activeFormat = chosen
+        print("✅ Set format: \(bestDimensions.width)x\(bestDimensions.height), HDR: \(chosen.isVideoHDRSupported)")
+        
+        // Set frame rate to 30fps
+        if let range = chosen.videoSupportedFrameRateRanges.first,
+           range.minFrameRate <= 30, range.maxFrameRate >= 30 {
+            let duration = CMTime(value: 1, timescale: 30)
+            device.activeVideoMinFrameDuration = duration
+            device.activeVideoMaxFrameDuration = duration
+        }
+        
+        // Enable HDR and set color space for iOS 17+
+        if #available(iOS 17.0, *) {
+            if chosen.isVideoHDRSupported {
+                device.automaticallyAdjustsVideoHDREnabled = false
+                device.isVideoHDREnabled = true
+                
+                print("✅ HDR enabled")
+                
+                // Set color space - prefer HLG_BT2020 for Apple Log
+                if chosen.supportedColorSpaces.contains(.HLG_BT2020) {
+                    device.activeColorSpace = .HLG_BT2020
+                    print("✅ Set color space: HLG_BT2020")
+                } else if chosen.supportedColorSpaces.contains(.P3_D65) {
+                    device.activeColorSpace = .P3_D65
+                    print("✅ Set color space: P3_D65")
                 }
+            } else {
+                print("⚠️ Format doesn't support HDR")
+                device.automaticallyAdjustsVideoHDREnabled = true
+                device.isVideoHDREnabled = false
             }
+        } else {
+            print("⚠️ iOS 17+ required for Log video")
         }
     }
 
     private func updateLogCompatibility(for device: AVCaptureDevice) {
+        // Ensure we check after device configuration is complete
+        let format = device.activeFormat
+        
+        // Debug info
+        print("🎥 Device: \(device.deviceType.rawValue)")
+        print("🎥 Format HDR Supported: \(format.isVideoHDRSupported)")
+        print("🎥 Color Spaces: \(format.supportedColorSpaces)")
+        if #available(iOS 17.0, *) {
+            print("🎥 HDR Enabled: \(device.isVideoHDREnabled)")
+            print("🎥 Active Color Space: \(device.activeColorSpace.rawValue)")
+        }
+        
         let compatible = LogCapability.isDeviceLogCapable(activeDevice: device)
+        print("🎥 Log Compatible: \(compatible)")
+        
         DispatchQueue.main.async { [weak self] in self?.isLogCompatible = compatible }
     }
 
