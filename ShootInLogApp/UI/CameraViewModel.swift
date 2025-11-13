@@ -94,7 +94,7 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
         if let dims = capture.currentVideoDimensions() {
             return CGSize(width: Int(dims.width), height: Int(dims.height))
         }
-        let parts = resolutionText.split(separator: "×")
+        let parts = resolutionText.split(separator: "x")
         let width = Int(parts.first ?? "3840") ?? 3840
         let height = Int(parts.last ?? "2160") ?? 2160
         return CGSize(width: width, height: height)
