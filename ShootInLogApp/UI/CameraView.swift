@@ -355,7 +355,7 @@ struct InfoRow: View {
     }
 }
 
-private extension UIDeviceOrientation {
+ extension UIDeviceOrientation {
     var videoOrientation: AVCaptureVideoOrientation? {
         switch self {
         case .portrait: return .portrait
