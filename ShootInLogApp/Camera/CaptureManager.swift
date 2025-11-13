@@ -268,35 +268,61 @@ final class CaptureManager: NSObject, ObservableObject {
         }
         defer { device.unlockForConfiguration() }
 
-        // Find the best HDR-capable format, preferring 4K
+        // Find format with Apple Log support (iOS 18+) or best HDR format
         var bestFormat: AVCaptureDevice.Format?
         var bestDimensions = CMVideoDimensions(width: 0, height: 0)
         
-        // First pass: look for 4K HDR format
-        for format in device.formats {
-            let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-            
-            // Prefer 4K resolution with HDR support
-            if dims.width == 3840 && dims.height == 2160 && format.isVideoHDRSupported {
-                bestFormat = format
-                bestDimensions = dims
-                print("✅ Found 4K HDR format")
-                break
-            }
-        }
-        
-        // Second pass: if no 4K HDR, find highest resolution with HDR
-        if bestFormat == nil {
-            for format in device.formats where format.isVideoHDRSupported {
+        // First: Look for format with AppleLog color space (iOS 18+)
+        if #available(iOS 18.0, *) {
+            for format in device.formats {
                 let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-                if dims.width * dims.height > bestDimensions.width * bestDimensions.height {
-                    bestFormat = format
-                    bestDimensions = dims
+                if format.supportedColorSpaces.contains(.AppleLog) {
+                    if dims.width == 3840 && dims.height == 2160 {
+                        bestFormat = format
+                        bestDimensions = dims
+                        print("✅ Found 4K Apple Log format")
+                        break
+                    } else if dims.width * dims.height > bestDimensions.width * bestDimensions.height {
+                        bestFormat = format
+                        bestDimensions = dims
+                        print("✅ Found Apple Log format: \(dims.width)x\(dims.height)")
+                    }
                 }
             }
         }
         
-        // Third pass: if still no HDR format, use highest available
+        // Second: Look for 4K HDR format with HLG_BT2020
+        if bestFormat == nil {
+            for format in device.formats {
+                let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                if dims.width == 3840 && dims.height == 2160 &&
+                   format.isVideoHDRSupported &&
+                   format.supportedColorSpaces.contains(.HLG_BT2020) {
+                    bestFormat = format
+                    bestDimensions = dims
+                    print("✅ Found 4K HDR format with HLG_BT2020")
+                    break
+                }
+            }
+        }
+        
+        // Third: Any HDR format with HLG_BT2020
+        if bestFormat == nil {
+            for format in device.formats where format.isVideoHDRSupported {
+                if format.supportedColorSpaces.contains(.HLG_BT2020) {
+                    let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                    if dims.width * dims.height > bestDimensions.width * bestDimensions.height {
+                        bestFormat = format
+                        bestDimensions = dims
+                    }
+                }
+            }
+            if bestFormat != nil {
+                print("✅ Found HDR format with HLG_BT2020")
+            }
+        }
+        
+        // Fourth: Fallback to highest resolution
         if bestFormat == nil {
             for format in device.formats {
                 let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
@@ -324,29 +350,33 @@ final class CaptureManager: NSObject, ObservableObject {
             device.activeVideoMaxFrameDuration = duration
         }
         
-        // Enable HDR and set color space for iOS 17+
+        // Configure for Apple Log
+        if #available(iOS 18.0, *) {
+            // Try to use Apple Log color space if available
+            if chosen.supportedColorSpaces.contains(.AppleLog) {
+                device.activeColorSpace = .AppleLog
+                device.automaticallyAdjustsVideoHDREnabled = false
+                device.isVideoHDREnabled = true
+                print("✅ Apple Log enabled with AppleLog color space")
+                return
+            }
+        }
+        
+        // Fallback to HLG for Log-like capture (iOS 17+)
         if #available(iOS 17.0, *) {
             if chosen.isVideoHDRSupported {
                 device.automaticallyAdjustsVideoHDREnabled = false
                 device.isVideoHDREnabled = true
                 
-                print("✅ HDR enabled")
-                
-                // Set color space - prefer HLG_BT2020 for Apple Log
+                // Use HLG_BT2020 which provides Log-like encoding
                 if chosen.supportedColorSpaces.contains(.HLG_BT2020) {
                     device.activeColorSpace = .HLG_BT2020
-                    print("✅ Set color space: HLG_BT2020")
+                    print("✅ HDR enabled with HLG_BT2020 (Log-like)")
                 } else if chosen.supportedColorSpaces.contains(.P3_D65) {
                     device.activeColorSpace = .P3_D65
-                    print("✅ Set color space: P3_D65")
+                    print("✅ HDR enabled with P3_D65")
                 }
-            } else {
-                print("⚠️ Format doesn't support HDR")
-                device.automaticallyAdjustsVideoHDREnabled = true
-                device.isVideoHDREnabled = false
             }
-        } else {
-            print("⚠️ iOS 17+ required for Log video")
         }
     }
 
