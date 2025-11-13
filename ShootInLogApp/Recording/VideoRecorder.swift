@@ -115,19 +115,26 @@ final class VideoRecorder {
     }
 
     private func transform(for orientation: AVCaptureVideoOrientation) -> CGAffineTransform {
+        // For video recording, we need proper transform to maintain aspect ratio
+        // Portrait modes need rotation to display correctly
         let transform: CGAffineTransform
         switch orientation {
         case .portrait:
+            // Rotate 90° clockwise for portrait
             transform = CGAffineTransform(rotationAngle: .pi / 2)
         case .portraitUpsideDown:
+            // Rotate 90° counter-clockwise for upside-down portrait
             transform = CGAffineTransform(rotationAngle: -.pi / 2)
         case .landscapeLeft:
+            // Rotate 180° for landscape left
             transform = CGAffineTransform(rotationAngle: .pi)
         case .landscapeRight:
+            // No rotation needed for landscape right
             transform = .identity
         @unknown default:
             transform = .identity
         }
+        print("🎥 Video transform for \(orientation.rawValue): rotation = \(transform)")
         return transform
     }
 

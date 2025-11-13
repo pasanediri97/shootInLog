@@ -33,7 +33,7 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
             v.framebufferOnly = false
             v.isPaused = false
             v.enableSetNeedsDisplay = false
-            v.preferredFramesPerSecond = 30
+            v.preferredFramesPerSecond = 60  // Increase for smoother preview
             v.delegate = self
         }
 
@@ -61,7 +61,7 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
         v.framebufferOnly = false
         v.isPaused = false
         v.enableSetNeedsDisplay = false
-        v.preferredFramesPerSecond = 30
+        v.preferredFramesPerSecond = 60  // Increase for smoother preview
         v.delegate = self
     }
 
@@ -140,6 +140,12 @@ final class LUTRenderer: NSObject, MTKViewDelegate {
         }
 
         let ts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        
+        // Trigger preview update immediately
+        DispatchQueue.main.async { [weak self] in
+            self?.previewView?.setNeedsDisplay()
+        }
+        
         cmd.addCompletedHandler { [weak self] _ in
             guard self != nil else { return }
             completion(outPB, ts)
