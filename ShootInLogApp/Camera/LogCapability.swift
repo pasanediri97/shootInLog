@@ -1,36 +1,49 @@
 import AVFoundation
 import Foundation
 
-/// Detects whether the current device + active format can shoot Apple Log-like HDR video.
-/// Primary: query AVFoundation for HDR/wide color support.
-/// Secondary: whitelist by model identifier.
+/// Detects whether the current device can shoot Apple Log video.
+/// Apple Log requires:
+/// - iPhone 15 Pro or newer Pro models
+/// - iOS 17.0 or later
+/// - HDR video support
+/// - HLG_BT2020 color space support
 enum LogCapability {
     static func isDeviceLogCapable(activeDevice: AVCaptureDevice?) -> Bool {
+        // Apple Log requires iOS 17+
+        guard #available(iOS 17.0, *) else {
+            return false
+        }
+        
         guard let device = activeDevice ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
             return false
         }
 
-        // Primary: format capabilities
+        // Check format capabilities for Apple Log support
         let format = device.activeFormat
-        var hdrOK = false
-        if #available(iOS 17.0, *) {
-            hdrOK = format.isVideoHDRSupported
-        } else {
-            hdrOK = format.isVideoHDRSupported
+        
+        // Must support HDR video
+        guard format.isVideoHDRSupported else {
+            return false
         }
+        
+        // Must support HLG_BT2020 color space (required for Apple Log)
         let colorSpaces = format.supportedColorSpaces
-        let wideColorOK = colorSpaces.contains(.P3_D65) || colorSpaces.contains(.HLG_BT2020)
-
-        if hdrOK && wideColorOK { return true }
-
-        // Secondary: model identifier whitelist (best-effort)
-        let model = platformIdentifier()
-        if model.hasPrefix("iPhone16,") || model.hasPrefix("iPhone17,") || model.hasPrefix("iPhone18,") {
-            // iPhone 15/16/17 families and beyond
-            return true
+        guard colorSpaces.contains(.HLG_BT2020) else {
+            return false
         }
-        // 15 non-pro still likely lacks Apple Log; leave as false by default
-        return false
+
+        // Additionally verify with device model (iPhone 15 Pro and newer)
+        let model = platformIdentifier()
+        
+        // iPhone 15 Pro: iPhone16,1 (15 Pro), iPhone16,2 (15 Pro Max)
+        // iPhone 16 Pro: iPhone17,1 (16 Pro), iPhone17,2 (16 Pro Max)
+        // Future models: iPhone18,x and beyond
+        let isProModel = model.hasPrefix("iPhone16,1") || // 15 Pro
+                        model.hasPrefix("iPhone16,2") || // 15 Pro Max
+                        model.hasPrefix("iPhone17,") ||  // 16 Pro family
+                        model.hasPrefix("iPhone18,")     // Future Pro models
+        
+        return isProModel
     }
 
     static func platformIdentifier() -> String {

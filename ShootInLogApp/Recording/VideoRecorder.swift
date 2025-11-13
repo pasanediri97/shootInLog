@@ -17,30 +17,37 @@ final class VideoRecorder {
     func start(resolution: CGSize,
                orientation: AVCaptureVideoOrientation,
                isFrontCamera: Bool,
-               preferredCodec: AVVideoCodecType = .hevc) throws {
+               preferredCodec: AVVideoCodecType = .proRes422HQ) throws {
         _ = isFrontCamera // reserved for future mirroring logic
         let temp = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("log_record_\(UUID().uuidString).mov")
         fileURL = temp
         let writer = try AVAssetWriter(url: temp, fileType: .mov)
 
-        // Video settings
+        // Video settings for Apple Log with ProRes
         let width = Int(resolution.width)
         let height = Int(resolution.height)
+        
+        // Use ProRes 422 HQ for Log recording
         var videoSettings: [String: Any] = [
             AVVideoCodecKey: preferredCodec,
             AVVideoWidthKey: width,
             AVVideoHeightKey: height,
         ]
-        // Prefer wide color properties
+        
+        // Configure for Apple Log color space and transfer function
+        // Using HLG (Hybrid Log-Gamma) which is the standard for Apple Log
         videoSettings[AVVideoColorPropertiesKey] = [
             AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_2020,
-            AVVideoTransferFunctionKey: AVVideoTransferFunction_Linear,
+            AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_2100_HLG, // Apple Log uses HLG
             AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_2020
         ]
+        
+        // ProRes compression settings
         videoSettings[AVVideoCompressionPropertiesKey] = [
-            AVVideoAverageBitRateKey: 60_000_000,
+            AVVideoAverageBitRateKey: 100_000_000, // Higher bitrate for ProRes
             AVVideoAllowFrameReorderingKey: false,
-            AVVideoMaxKeyFrameIntervalKey: 30
+            AVVideoMaxKeyFrameIntervalKey: 30,
+            AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel
         ]
 
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)

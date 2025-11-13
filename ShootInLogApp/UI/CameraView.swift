@@ -6,6 +6,8 @@ struct CameraView: View {
     @StateObject private var model = CameraViewModel()
     @State private var selectedZoom: CGFloat = 1.0
     @State private var showInfo = false
+    @State private var recordingTime: TimeInterval = 0
+    @State private var recordingTimer: Timer?
 
     var body: some View {
         ZStack {
@@ -19,13 +21,14 @@ struct CameraView: View {
             VStack {
                 topBar
                 Spacer()
-                lutButtons
-                recordBar
-                    .padding(.bottom, 32)
+                bottomControls
             }
-            .padding(.horizontal)
 
             overlay
+            
+            if model.isRecording {
+                recordingIndicators
+            }
         }
         .sheet(isPresented: $showInfo) {
             InfoSheet()
@@ -39,6 +42,13 @@ struct CameraView: View {
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
             model.handleDeviceOrientation(UIDevice.current.orientation)
+        }
+        .onChange(of: model.isRecording) { isRecording in
+            if isRecording {
+                startRecordingTimer()
+            } else {
+                stopRecordingTimer()
+            }
         }
         .onDisappear {
             UIDevice.current.endGeneratingDeviceOrientationNotifications()
@@ -61,95 +71,218 @@ struct CameraView: View {
     }
 
     private var topBar: some View {
-        HStack {
-            Button(action: { model.toggleFrontBack() }) {
-                Image(systemName: "arrow.triangle.2.circlepath.camera")
-                    .font(.title2)
-                    .padding(8)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-            Spacer()
-            Button(action: { showInfo = true }) {
-                Image(systemName: "info.circle")
-                    .font(.title2)
-                    .padding(8)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-        }
-        .padding(.top, 8)
-    }
-
-    private var lutButtons: some View {
-        HStack(spacing: 12) {
-            ForEach([LUTMode.off, .subject, .scenery]) { mode in
-                Button(action: { model.lutMode = mode }) {
-                    Text(mode.rawValue)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(model.lutMode == mode ? .black : .white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                        .background(model.lutMode == mode ? Color.white : Color.white.opacity(0.2))
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        HStack(alignment: .top) {
+            // Left side - LOG indicator badge
+            VStack(alignment: .leading, spacing: 8) {
+                if model.isLogCompatible {
+                    HStack(spacing: 6) {
+                        Image(systemName: "video.fill")
+                            .font(.caption2.weight(.semibold))
+                        Text("LOG")
+                            .font(.caption.weight(.bold))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(.white)
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                 }
-                .disabled(!model.isLogCompatible && mode != .off)
+                
+                // LUT Mode indicator
+                if model.lutMode != .off {
+                    Text(model.lutMode.rawValue.uppercased())
+                        .font(.caption2.weight(.semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color.white.opacity(0.25))
+                        )
+                }
+            }
+            
+            Spacer()
+            
+            // Right side controls
+            VStack(spacing: 12) {
+                Button(action: { model.toggleFrontBack() }) {
+                    Image(systemName: "arrow.triangle.2.circlepath.camera")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
+                }
+                
+                Button(action: { showInfo = true }) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
+                }
             }
         }
-        .padding(.bottom, 12)
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
     }
 
-    private var recordBar: some View {
-        VStack(spacing: 16) {
-            if !model.usingFrontCamera {
-                HStack(spacing: 10) {
+    private var bottomControls: some View {
+        VStack(spacing: 0) {
+            // LUT mode selector - compact design
+            if model.isLogCompatible {
+                HStack(spacing: 8) {
+                    ForEach([LUTMode.off, .subject, .scenery]) { mode in
+                        Button(action: { model.lutMode = mode }) {
+                            Text(mode.rawValue.uppercased())
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(model.lutMode == mode ? .black : .white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(model.lutMode == mode ? Color.white : Color.white.opacity(0.2))
+                                )
+                        }
+                    }
+                }
+                .padding(.bottom, 20)
+            }
+            
+            // Zoom controls
+            if !model.usingFrontCamera && model.isLogCompatible {
+                HStack(spacing: 8) {
                     ForEach([0.5, 1.0, 2.0, 4.0, 8.0], id: \.self) { z in
                         Button(action: {
                             selectedZoom = z
                             model.setZoomStep(CGFloat(z))
                         }) {
-                            Text("\(z, specifier: "%.1f")x")
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(selectedZoom == z ? .black : .white)
-                                .frame(width: 52, height: 34)
-                                .background(selectedZoom == z ? Color.white : Color.white.opacity(0.2))
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            Text(z == 0.5 ? ".5" : (z == 1.0 ? "1" : "\(Int(z))"))
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(selectedZoom == z ? .yellow : .white)
+                                .frame(width: 36, height: 36)
+                                .background(
+                                    Circle()
+                                        .fill(selectedZoom == z ? Color.white.opacity(0.25) : Color.clear)
+                                )
                         }
                     }
                 }
+                .padding(.bottom, 24)
             }
-
-            Button(action: { model.toggleRecord() }) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.white, lineWidth: 5)
-                        .frame(width: 86, height: 86)
-                    Circle()
-                        .fill(model.isLogCompatible ? (model.isRecording ? Color.red : Color.white) : Color.gray)
-                        .frame(width: 66, height: 66)
-                        .clipShape(RoundedRectangle(cornerRadius: model.isRecording ? 12 : 33, style: .continuous))
-                        .animation(.easeInOut(duration: 0.2), value: model.isRecording)
+            
+            // Record button and resolution
+            VStack(spacing: 12) {
+                // Record button
+                Button(action: { model.toggleRecord() }) {
+                    ZStack {
+                        // Outer ring
+                        Circle()
+                            .strokeBorder(model.isLogCompatible ? Color.white : Color.gray, lineWidth: 4)
+                            .frame(width: 76, height: 76)
+                        
+                        // Inner button
+                        if model.isRecording {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.red)
+                                .frame(width: 32, height: 32)
+                        } else {
+                            Circle()
+                                .fill(model.isLogCompatible ? Color.red : Color.gray)
+                                .frame(width: 64, height: 64)
+                        }
+                    }
+                }
+                .disabled(!model.isLogCompatible)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: model.isRecording)
+                
+                // Resolution text
+                if !model.resolutionText.isEmpty && model.isLogCompatible {
+                    Text(model.resolutionText)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
                 }
             }
-            .disabled(!model.isLogCompatible)
-
-            if !model.resolutionText.isEmpty {
-                Text("Resolution \(model.resolutionText)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            .padding(.bottom, 40)
+        }
+    }
+    
+    private var recordingIndicators: some View {
+        VStack {
+            HStack(spacing: 8) {
+                // Recording red dot
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 8, height: 8)
+                    .opacity(recordingTime.truncatingRemainder(dividingBy: 1.0) < 0.5 ? 1.0 : 0.3)
+                
+                // Recording timer
+                Text(formatRecordingTime(recordingTime))
+                    .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                    .foregroundColor(.white)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(Color.black.opacity(0.6))
+            )
+            .padding(.top, 80)
+            
+            Spacer()
         }
     }
 
     private var overlay: some View {
         VStack {
             if !model.isLogCompatible {
-                Text("Your iPhone model is not compatible with this app because it is not capable of shooting Log video")
-                    .font(.subheadline)
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-                    .padding()
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.title2)
+                        .foregroundColor(.yellow)
+                    
+                    Text("Log Video Not Supported")
+                        .font(.headline)
+                    
+                    Text("Your device doesn't support Log video recording. This feature requires iPhone 15 Pro or newer.")
+                        .font(.subheadline)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(24)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.black.opacity(0.85))
+                )
+                .padding(.horizontal, 32)
+                .padding(.top, 120)
             }
             Spacer()
         }
+    }
+    
+    private func startRecordingTimer() {
+        recordingTime = 0
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            recordingTime += 0.1
+        }
+    }
+    
+    private func stopRecordingTimer() {
+        recordingTimer?.invalidate()
+        recordingTimer = nil
+        recordingTime = 0
+    }
+    
+    private func formatRecordingTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
 }
 
@@ -174,17 +307,51 @@ struct MetalPreviewContainer: UIViewRepresentable {
 // MARK: - Info Sheet
 struct InfoSheet: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("How to Use")
-                .font(.title2).bold()
-            Text("\u{2022} App opens directly to Log video mode.\n\u{2022} Choose a LUT: Off, Subject, or Scenery.\n\u{2022} Tap record to capture 4K video. LUT is applied in real time to preview and recording.\n\u{2022} Use zoom steps for quick lens switching (0.5x, 1x, 2x, 4x, 8x).\n\u{2022} Video saves to your Photos after stopping.")
-            Link(destination: URL(string: "https://youtu.be/your-tutorial-id")!) {
-                Label("Watch Tutorial on YouTube", systemImage: "play.rectangle")
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Image(systemName: "video.badge.waveform.fill")
+                    .font(.title)
+                    .foregroundColor(.yellow)
+                
+                Text("Log Video Recorder")
+                    .font(.title2.bold())
             }
+            
+            VStack(alignment: .leading, spacing: 12) {
+                InfoRow(icon: "camera.fill", text: "Records in Apple Log format for maximum dynamic range")
+                InfoRow(icon: "square.3.layers.3d", text: "Apply LUTs in real-time: Subject or Scenery")
+                InfoRow(icon: "4k.tv.fill", text: "Records at highest available resolution (up to 4K)")
+                InfoRow(icon: "magnifyingglass.circle.fill", text: "Quick zoom: .5x, 1x, 2x, 4x, 8x")
+                InfoRow(icon: "arrow.clockwise.circle.fill", text: "Toggle between front and back cameras")
+            }
+            
+            Divider()
+            
+            Text("Videos are automatically saved to your Photos library")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
             Spacer()
         }
-        .padding()
+        .padding(24)
+    }
+}
+
+struct InfoRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundColor(.blue)
+                .frame(width: 24)
+            
+            Text(text)
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

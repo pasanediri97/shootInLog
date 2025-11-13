@@ -244,12 +244,17 @@ final class CaptureManager: NSObject, ObservableObject {
                 device.activeVideoMinFrameDuration = duration
                 device.activeVideoMaxFrameDuration = duration
             }
+            // Enable HDR and Apple Log for compatible devices (iOS 17+)
             if #available(iOS 17.0, *) {
                 if chosen.isVideoHDRSupported {
                     device.automaticallyAdjustsVideoHDREnabled = false
                     device.isVideoHDREnabled = true
+                    
+                    // Prefer HLG BT.2020 color space for Apple Log compatibility
                     if chosen.supportedColorSpaces.contains(.HLG_BT2020) {
                         device.activeColorSpace = .HLG_BT2020
+                    } else if chosen.supportedColorSpaces.contains(.P3_D65) {
+                        device.activeColorSpace = .P3_D65
                     }
                 } else {
                     device.automaticallyAdjustsVideoHDREnabled = true
