@@ -1,4 +1,4 @@
-import AVFoundation
+ï»¿import AVFoundation
 import Combine
 import CoreMedia
 import UIKit
@@ -9,7 +9,7 @@ final class CaptureManager: NSObject, ObservableObject {
     @Published var isSessionRunning: Bool = false
     @Published var isRecording: Bool = false
     @Published var isLogCompatible: Bool = false
-            self?.activeResolutionDescription = "\(dims.width)×\(dims.height)"
+            self?.activeResolutionDescription = "\(dims.width)ï¿½\(dims.height)"
     @Published var errorMessage: String?
     @Published var usingFrontCamera: Bool = false
 
@@ -104,8 +104,6 @@ final class CaptureManager: NSObject, ObservableObject {
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
         videoOutput.alwaysDiscardsLateVideoFrames = true
-        videoOutput.minFrameDuration = CMTime(value: 1, timescale: 30)
-        videoOutput.maxFrameDuration = CMTime(value: 1, timescale: 30)
         if session.canAddOutput(videoOutput) { session.addOutput(videoOutput) }
         videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
         configureConnection(videoOutput.connection(with: .video))
@@ -207,8 +205,11 @@ final class CaptureManager: NSObject, ObservableObject {
             connection.videoOrientation = currentOrientation
         }
         if connection.isVideoMirroringSupported {
-            connection.isVideoMirrored = false
+            connection.isVideoMirrored = usingFrontCamera
         }
+        let targetFrameDuration = CMTime(value: 1, timescale: 30)
+        connection.videoMinFrameDuration = targetFrameDuration
+        connection.videoMaxFrameDuration = targetFrameDuration
         if connection.isVideoStabilizationSupported {
             let modes = connection.availableVideoStabilizationModes
             if #available(iOS 13.0, *), modes.contains(.cinematicExtended) {
@@ -274,7 +275,7 @@ final class CaptureManager: NSObject, ObservableObject {
     private func updateActiveResolutionDescription() {
         guard let dims = currentVideoDimensions() else { return }
         DispatchQueue.main.async { [weak self] in
-            self?.activeResolutionDescription = "\(dims.width)×\(dims.height)"
+            self?.activeResolutionDescription = "\(dims.width)ï¿½\(dims.height)"
         }
     }
 
