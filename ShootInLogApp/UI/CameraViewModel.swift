@@ -103,11 +103,24 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
     // MARK: - FrameConsumer
     func consumeVideo(sampleBuffer: CMSampleBuffer) {
         let mode = lutMode
-        renderer.processAsync(sampleBuffer: sampleBuffer, mode: mode) { [weak self] pixelBuffer, timestamp in
-            guard let self else { return }
-            if self.isRecording {
-                self.recorder.appendVideo(pixelBuffer: pixelBuffer, with: timestamp)
+        
+        // For TRUE Log recording:
+        // - Record the ORIGINAL camera buffer (raw Log footage - will look flat/greyed)
+        // - Apply LUT only to PREVIEW (for monitoring)
+        
+        if isRecording {
+            // Record the ORIGINAL buffer without LUT processing
+            // This gives true Log footage (flat, desaturated look)
+            if let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
+                let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                recorder.appendVideo(pixelBuffer: pixelBuffer, with: timestamp)
             }
+        }
+        
+        // Process with LUT for preview display only
+        renderer.processAsync(sampleBuffer: sampleBuffer, mode: mode) { [weak self] _, _ in
+            // LUT-processed frame is only used for preview, not recording
+            guard let self else { return }
         }
     }
 

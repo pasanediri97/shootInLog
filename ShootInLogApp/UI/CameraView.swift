@@ -157,7 +157,7 @@ struct CameraView: View {
             // Zoom controls
             if !model.usingFrontCamera && model.isLogCompatible {
                 HStack(spacing: 8) {
-                    ForEach([ 1.0, 2.0, 4.0, 8.0], id: \.self) { z in
+                    ForEach([0.5, 1.0, 2.0, 4.0, 8.0], id: \.self) { z in
                         Button(action: {
                             selectedZoom = z
                             model.setZoomStep(CGFloat(z))
@@ -318,18 +318,24 @@ struct InfoSheet: View {
             }
             
             VStack(alignment: .leading, spacing: 12) {
-                InfoRow(icon: "camera.fill", text: "Records in Apple Log format for maximum dynamic range")
-                InfoRow(icon: "square.3.layers.3d", text: "Apply LUTs in real-time: Subject or Scenery")
-                InfoRow(icon: "4k.tv.fill", text: "Records at highest available resolution (up to 4K)")
+                InfoRow(icon: "camera.fill", text: "Records RAW Apple Log footage (flat, desaturated look)")
+                InfoRow(icon: "square.3.layers.3d", text: "LUTs are for PREVIEW ONLY - recording is always RAW Log")
+                InfoRow(icon: "paintpalette.fill", text: "LUT OFF shows true Log footage (grey/flat)")
+                InfoRow(icon: "4k.tv.fill", text: "ProRes 422 HQ at highest available resolution")
                 InfoRow(icon: "magnifyingglass.circle.fill", text: "Quick zoom: .5x, 1x, 2x, 4x, 8x")
-                InfoRow(icon: "arrow.clockwise.circle.fill", text: "Toggle between front and back cameras")
             }
             
             Divider()
             
-            Text("Videos are automatically saved to your Photos library")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Important:")
+                    .font(.subheadline.bold())
+                Text("• Recorded videos will look flat/grey (that's correct for Log)")
+                Text("• Use LUTs to preview how footage might look after grading")
+                Text("• Color grade Log footage in post-production for final look")
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
             
             Spacer()
         }
