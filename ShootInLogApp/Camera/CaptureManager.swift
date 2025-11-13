@@ -335,7 +335,7 @@ final class CaptureManager: NSObject, ObservableObject {
             case .sRGB: return "sRGB"
             case .P3_D65: return "P3_D65"
             case .HLG_BT2020: return "HLG_BT2020"
-            case .AppleLog: return "AppleLog"
+            case .appleLog: return "AppleLog"
             @unknown default: return "Unknown(\(space.rawValue))"
             }
         }
@@ -348,7 +348,7 @@ final class CaptureManager: NSObject, ObservableObject {
             case .sRGB: activeColorName = "sRGB"
             case .P3_D65: activeColorName = "P3_D65"
             case .HLG_BT2020: activeColorName = "HLG_BT2020"
-            case .AppleLog: activeColorName = "AppleLog"
+            case .appleLog: activeColorName = "AppleLog"
             @unknown default: activeColorName = "Unknown(\(device.activeColorSpace.rawValue))"
             }
             print("🎥 Active Color Space: \(activeColorName)")
