@@ -10,6 +10,8 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
     @Published var resolutionText: String = ""
     @Published var showInfo: Bool = false
     @Published var permissionMessage: String?
+    @Published var usingFrontCamera: Bool = false
+    @Published var orientation: AVCaptureVideoOrientation = .portrait
 
     let capture = CaptureManager()
     private let recorder = VideoRecorder()
@@ -17,8 +19,8 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
     private var cancellables = Set<AnyCancellable>()
 
     override init() {
-        guard let r = LUTRenderer(previewView: nil) else { fatalError("Metal unavailable") }
-        renderer = r
+        guard let renderer = LUTRenderer(previewView: nil) else { fatalError("Metal unavailable") }
+        self.renderer = renderer
         super.init()
         capture.frameConsumer = self
         bind()
@@ -32,7 +34,11 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
         capture.$activeResolutionDescription
             .receive(on: DispatchQueue.main)
             .assign(to: &$resolutionText)
-        recorder.onSavedToPhotos = { [weak self] success, error in
+        capture.$usingFrontCamera
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$usingFrontCamera)
+
+        recorder.onSavedToPhotos = { [weak self] success, _ in
             DispatchQueue.main.async {
                 self?.isRecording = false
                 if success == false {
@@ -42,7 +48,9 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
         }
     }
 
-    func setPreviewView(_ v: MTKView) { renderer.setPreviewView(v) }
+    func setPreviewView(_ view: MTKView) {
+        renderer.setPreviewView(view)
+    }
 
     // MARK: - Controls
     func toggleRecord() {
@@ -55,13 +63,11 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
 
     func startRecording() {
         guard isLogCompatible else { return }
-        let parts = resolutionText.split(separator: "×")
-        let w = Int(parts.first ?? "3840") ?? 3840
-        let h = Int(parts.last ?? "2160") ?? 2160
         do {
-            try recorder.start(resolution: CGSize(width: w, height: h))
+            try recorder.start(resolution: preferredRecordingSize(), orientation: orientation, isFrontCamera: usingFrontCamera)
             isRecording = true
         } catch {
+            permissionMessage = "Unable to start recording: \(error.localizedDescription)"
             isRecording = false
         }
     }
@@ -70,21 +76,44 @@ final class CameraViewModel: NSObject, ObservableObject, CaptureManager.FrameCon
         recorder.stopAndSaveToPhotos()
     }
 
-    func toggleFrontBack() { capture.toggleFrontBack() }
-    func setZoomStep(_ step: CGFloat) { capture.setBackCameraZoomStep(step) }
+    func toggleFrontBack() {
+        capture.toggleFrontBack()
+    }
+
+    func setZoomStep(_ step: CGFloat) {
+        capture.setBackCameraZoomStep(step)
+    }
+
+    func handleDeviceOrientation(_ deviceOrientation: UIDeviceOrientation) {
+        guard let videoOrientation = deviceOrientation.videoOrientation else { return }
+        orientation = videoOrientation
+        capture.updateVideoOrientation(videoOrientation)
+    }
+
+    private func preferredRecordingSize() -> CGSize {
+        if let dims = capture.currentVideoDimensions() {
+            return CGSize(width: Int(dims.width), height: Int(dims.height))
+        }
+        let parts = resolutionText.split(separator: "×")
+        let width = Int(parts.first ?? "3840") ?? 3840
+        let height = Int(parts.last ?? "2160") ?? 2160
+        return CGSize(width: width, height: height)
+    }
 
     // MARK: - FrameConsumer
     func consumeVideo(sampleBuffer: CMSampleBuffer) {
         let mode = lutMode
-        renderer.processAsync(sampleBuffer: sampleBuffer, mode: mode) { [weak self] outPB, ts in
+        renderer.processAsync(sampleBuffer: sampleBuffer, mode: mode) { [weak self] pixelBuffer, timestamp in
             guard let self else { return }
             if self.isRecording {
-                self.recorder.appendVideo(pixelBuffer: outPB, with: ts)
+                self.recorder.appendVideo(pixelBuffer: pixelBuffer, with: timestamp)
             }
         }
     }
 
     func consumeAudio(sampleBuffer: CMSampleBuffer) {
-        if isRecording { recorder.appendAudio(sampleBuffer: sampleBuffer) }
+        if isRecording {
+            recorder.appendAudio(sampleBuffer: sampleBuffer)
+        }
     }
 }

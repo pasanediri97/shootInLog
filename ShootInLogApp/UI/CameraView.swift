@@ -1,5 +1,6 @@
 import SwiftUI
 import MetalKit
+import AVFoundation
 
 struct CameraView: View {
     @StateObject private var model = CameraViewModel()
@@ -8,17 +9,19 @@ struct CameraView: View {
 
     var body: some View {
         ZStack {
-            MetalPreviewContainer(onReady: { mtk in
-                model.setPreviewView(mtk)
-            })
-            .ignoresSafeArea()
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                cameraPreview
+                Spacer()
+            }
 
             VStack {
                 topBar
                 Spacer()
                 lutButtons
                 recordBar
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 32)
             }
             .padding(.horizontal)
 
@@ -33,6 +36,28 @@ struct CameraView: View {
         }, set: { _ in })) { item in
             Alert(title: Text("Notice"), message: Text(item.message), dismissButton: .default(Text("OK")))
         }
+        .onAppear {
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+            model.handleDeviceOrientation(UIDevice.current.orientation)
+        }
+        .onDisappear {
+            UIDevice.current.endGeneratingDeviceOrientationNotifications()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            model.handleDeviceOrientation(UIDevice.current.orientation)
+        }
+        .onChange(of: model.usingFrontCamera) { isFront in
+            if isFront { selectedZoom = 1.0 }
+        }
+    }
+
+    private var cameraPreview: some View {
+        MetalPreviewContainer(onReady: { mtk in
+            model.setPreviewView(mtk)
+        })
+        .aspectRatio(9 / 16, contentMode: .fit)
+        .frame(maxWidth: .infinity)
+        .background(Color.black)
     }
 
     private var topBar: some View {
@@ -60,11 +85,11 @@ struct CameraView: View {
                 Button(action: { model.lutMode = mode }) {
                     Text(mode.rawValue)
                         .font(.headline.weight(.semibold))
-                        .foregroundStyle(model.lutMode == mode ? .white : .primary)
+                        .foregroundStyle(model.lutMode == mode ? .black : .white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
-                        .background(model.lutMode == mode ? Color.accentColor : Color(white: 0.2, opacity: 0.6))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(model.lutMode == mode ? Color.white : Color.white.opacity(0.2))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .disabled(!model.isLogCompatible && mode != .off)
             }
@@ -74,37 +99,43 @@ struct CameraView: View {
 
     private var recordBar: some View {
         VStack(spacing: 16) {
-            // Zoom steps
-            HStack(spacing: 10) {
-                ForEach([0.5, 1.0, 2.0, 4.0, 8.0], id: \.self) { z in
-                    Button(action: {
-                        selectedZoom = z
-                        model.setZoomStep(CGFloat(z))
-                    }) {
-                        Text("\(z, specifier: "%.1f")x")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(selectedZoom == z ? .white : .primary)
-                            .frame(width: 52, height: 34)
-                            .background(selectedZoom == z ? Color.accentColor : Color(white: 0.2, opacity: 0.6))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+            if !model.usingFrontCamera {
+                HStack(spacing: 10) {
+                    ForEach([0.5, 1.0, 2.0, 4.0, 8.0], id: \.self) { z in
+                        Button(action: {
+                            selectedZoom = z
+                            model.setZoomStep(CGFloat(z))
+                        }) {
+                            Text("\(z, specifier: "%.1f")x")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(selectedZoom == z ? .black : .white)
+                                .frame(width: 52, height: 34)
+                                .background(selectedZoom == z ? Color.white : Color.white.opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
                     }
                 }
             }
 
-            // Record button
             Button(action: { model.toggleRecord() }) {
-                Circle()
-                    .fill(model.isLogCompatible ? (model.isRecording ? Color.red : Color.white) : Color.gray)
-                    .frame(width: 78, height: 78)
-                    .overlay(
-                        Circle().stroke(Color.white.opacity(0.8), lineWidth: 3)
-                    )
+                ZStack {
+                    Circle()
+                        .stroke(Color.white, lineWidth: 5)
+                        .frame(width: 86, height: 86)
+                    Circle()
+                        .fill(model.isLogCompatible ? (model.isRecording ? Color.red : Color.white) : Color.gray)
+                        .frame(width: 66, height: 66)
+                        .clipShape(RoundedRectangle(cornerRadius: model.isRecording ? 12 : 33, style: .continuous))
+                        .animation(.easeInOut(duration: 0.2), value: model.isRecording)
+                }
             }
             .disabled(!model.isLogCompatible)
 
-            Text(model.resolutionText.isEmpty ? "" : "Recording resolution: \(model.resolutionText)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            if !model.resolutionText.isEmpty {
+                Text("Resolution \(model.resolutionText)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -147,8 +178,6 @@ struct InfoSheet: View {
             Text("How to Use")
                 .font(.title2).bold()
             Text("\u{2022} App opens directly to Log video mode.\n\u{2022} Choose a LUT: Off, Subject, or Scenery.\n\u{2022} Tap record to capture 4K video. LUT is applied in real time to preview and recording.\n\u{2022} Use zoom steps for quick lens switching (0.5x, 1x, 2x, 4x, 8x).\n\u{2022} Video saves to your Photos after stopping.")
-
-
             Link(destination: URL(string: "https://youtu.be/your-tutorial-id")!) {
                 Label("Watch Tutorial on YouTube", systemImage: "play.rectangle")
                     .font(.headline)
@@ -156,6 +185,18 @@ struct InfoSheet: View {
             Spacer()
         }
         .padding()
+    }
+}
+
+private extension UIDeviceOrientation {
+    var videoOrientation: AVCaptureVideoOrientation? {
+        switch self {
+        case .portrait: return .portrait
+        case .portraitUpsideDown: return .portraitUpsideDown
+        case .landscapeLeft: return .landscapeRight // device left = camera right
+        case .landscapeRight: return .landscapeLeft
+        default: return nil
+        }
     }
 }
 

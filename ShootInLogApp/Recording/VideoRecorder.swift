@@ -10,10 +10,15 @@ final class VideoRecorder {
 
     private var startTime: CMTime?
     private var fileURL: URL?
+    private var currentOrientation: AVCaptureVideoOrientation = .portrait
 
     var onSavedToPhotos: ((Bool, Error?) -> Void)?
 
-    func start(resolution: CGSize, preferredCodec: AVVideoCodecType = .hevc) throws {
+    func start(resolution: CGSize,
+               orientation: AVCaptureVideoOrientation,
+               isFrontCamera: Bool,
+               preferredCodec: AVVideoCodecType = .hevc) throws {
+        _ = isFrontCamera // reserved for future mirroring logic
         let temp = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("log_record_\(UUID().uuidString).mov")
         fileURL = temp
         let writer = try AVAssetWriter(url: temp, fileType: .mov)
@@ -32,9 +37,17 @@ final class VideoRecorder {
             AVVideoTransferFunctionKey: AVVideoTransferFunction_Linear,
             AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_2020
         ]
+        videoSettings[AVVideoCompressionPropertiesKey] = [
+            AVVideoAverageBitRateKey: 60_000_000,
+            AVVideoProfileLevelKey: AVVideoProfileLevelHEVCMain10AutoLevel,
+            AVVideoAllowFrameReorderingKey: false,
+            AVVideoMaxKeyFrameIntervalKey: 30
+        ]
 
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
         vIn.expectsMediaDataInRealTime = true
+        currentOrientation = orientation
+        vIn.transform = transform(for: orientation)
         if writer.canAdd(vIn) { writer.add(vIn) }
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: vIn, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA),
@@ -88,6 +101,23 @@ final class VideoRecorder {
         }
     }
 
+    private func transform(for orientation: AVCaptureVideoOrientation) -> CGAffineTransform {
+        let transform: CGAffineTransform
+        switch orientation {
+        case .portrait:
+            transform = CGAffineTransform(rotationAngle: .pi / 2)
+        case .portraitUpsideDown:
+            transform = CGAffineTransform(rotationAngle: -.pi / 2)
+        case .landscapeLeft:
+            transform = CGAffineTransform(rotationAngle: .pi)
+        case .landscapeRight:
+            transform = .identity
+        @unknown default:
+            transform = .identity
+        }
+        return transform
+    }
+
     private func saveToPhotos(url: URL) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             guard status == .authorized || status == .limited else {
@@ -104,4 +134,3 @@ final class VideoRecorder {
         }
     }
 }
-

@@ -9,55 +9,60 @@ final class CaptureManager: NSObject, ObservableObject {
     @Published var isSessionRunning: Bool = false
     @Published var isRecording: Bool = false
     @Published var isLogCompatible: Bool = false
-    @Published var activeResolutionDescription: String = ""
+            self?.activeResolutionDescription = "\(dims.width)×\(dims.height)"
     @Published var errorMessage: String?
+    @Published var usingFrontCamera: Bool = false
 
-    // Capture
+    // Capture graph
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
     private var videoDeviceInput: AVCaptureDeviceInput?
     private let videoOutput = AVCaptureVideoDataOutput()
     private let audioOutput = AVCaptureAudioDataOutput()
+    private var currentOrientation: AVCaptureVideoOrientation = .portrait
 
-    // Consumers
     weak var frameConsumer: FrameConsumer?
 
-    // Zoom / camera config
-    @Published var usingFrontCamera: Bool = false
-    private var currentVideoDevice: AVCaptureDevice? { videoDeviceInput?.device }
-
+    // MARK: - Life cycle
     override init() {
         super.init()
         configure()
     }
 
-    /// Protocol to receive synchronized video frames (and audio if needed)
+    /// Protocol to receive synchronized video/audio frames
     protocol FrameConsumer: AnyObject {
         func consumeVideo(sampleBuffer: CMSampleBuffer)
         func consumeAudio(sampleBuffer: CMSampleBuffer)
     }
 
     private func configure() {
-        // Request permissions first, then configure session
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             guard let self else { return }
-            if !granted {
-                self.publishError("Camera access denied. Enable in Settings.")
+            guard granted else {
+                self.publishError("Camera access denied. Enable it in Settings > Privacy > Camera.")
                 return
             }
             AVAudioSession.sharedInstance().requestRecordPermission { _ in
-                self.sessionQueue.async {
-                    // Configure audio session (non-fatal if fails)
-                    let audio = AVAudioSession.sharedInstance()
-                    do {
-                        try audio.setCategory(.playAndRecord, mode: .videoRecording, options: [.defaultToSpeaker])
-                        try audio.setActive(true)
-                    } catch { /* ignore */ }
+                self.sessionQueue.async { [weak self] in
+                    guard let self else { return }
+                    self.configureAudioSession()
                     self.setupSession()
-                    if !self.session.isRunning { self.session.startRunning() }
-                    DispatchQueue.main.async { self.isSessionRunning = true }
+                    if !self.session.isRunning {
+                        self.session.startRunning()
+                        DispatchQueue.main.async { self.isSessionRunning = true }
+                    }
                 }
             }
+        }
+    }
+
+    private func configureAudioSession() {
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.playAndRecord, mode: .videoRecording, options: [.defaultToSpeaker])
+            try audioSession.setActive(true)
+        } catch {
+            // Non-fatal. Still allow capture to proceed.
         }
     }
 
@@ -65,60 +70,67 @@ final class CaptureManager: NSObject, ObservableObject {
         session.beginConfiguration()
         session.sessionPreset = .inputPriority
 
-        // Preferred: back camera by default
-        guard let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) ??
-                AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) ??
-                AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) else {
-            publishError("No back camera available")
+        guard let videoDevice = defaultVideoDevice(position: .back) else {
+            publishError("No compatible back camera available")
             session.commitConfiguration()
             return
         }
 
         do {
-            let input = try AVCaptureDeviceInput(device: back)
+            let input = try AVCaptureDeviceInput(device: videoDevice)
             if session.canAddInput(input) { session.addInput(input) }
             videoDeviceInput = input
+            DispatchQueue.main.async { [weak self] in
+                self?.usingFrontCamera = (videoDevice.position == .front)
+            }
         } catch {
-            publishError("Failed to create video input: \(error.localizedDescription)")
+            publishError("Unable to create video input: \(error.localizedDescription)")
             session.commitConfiguration()
             return
         }
 
-        // Audio input (optional but desirable for social content)
         if let mic = AVCaptureDevice.default(for: .audio) {
             do {
-                let aIn = try AVCaptureDeviceInput(device: mic)
-                if session.canAddInput(aIn) { session.addInput(aIn) }
+                let audioInput = try AVCaptureDeviceInput(device: mic)
+                if session.canAddInput(audioInput) { session.addInput(audioInput) }
             } catch {
-                // Non-fatal
+                // microphone optional
             }
         }
 
-        // Configure 4K if possible; fall back to highest
-        selectBestFormatAndFrameRate(device: back)
+        selectBestFormatAndFrameRate(device: videoDevice)
 
-        // Video data output
         videoOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
         videoOutput.alwaysDiscardsLateVideoFrames = true
+        videoOutput.minFrameDuration = CMTime(value: 1, timescale: 30)
+        videoOutput.maxFrameDuration = CMTime(value: 1, timescale: 30)
         if session.canAddOutput(videoOutput) { session.addOutput(videoOutput) }
         videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
-        if let connection = videoOutput.connection(with: .video) {
-            connection.videoOrientation = .portrait
-        }
+        configureConnection(videoOutput.connection(with: .video))
 
-        // Audio data output
         if session.canAddOutput(audioOutput) {
             session.addOutput(audioOutput)
             audioOutput.setSampleBufferDelegate(self, queue: sessionQueue)
         }
 
-        isLogCompatible = LogCapability.isDeviceLogCapable(activeDevice: back)
+        updateLogCompatibility(for: videoDevice)
         session.commitConfiguration()
         updateActiveResolutionDescription()
     }
 
+    private func defaultVideoDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
+        if position == .back {
+            let preferred: [AVCaptureDevice.DeviceType] = [.builtInTripleCamera, .builtInDualWideCamera, .builtInDualCamera, .builtInWideAngleCamera]
+            return AVCaptureDevice.DiscoverySession(deviceTypes: preferred, mediaType: .video, position: .back).devices.first
+        } else {
+            let preferred: [AVCaptureDevice.DeviceType] = [.builtInTrueDepthCamera, .builtInWideAngleCamera]
+            return AVCaptureDevice.DiscoverySession(deviceTypes: preferred, mediaType: .video, position: .front).devices.first
+        }
+    }
+
+    // MARK: - Session control
     func startSession() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
@@ -146,14 +158,8 @@ final class CaptureManager: NSObject, ObservableObject {
     private func _toggleFrontBack() {
         guard let currentInput = videoDeviceInput else { return }
         let newPosition: AVCaptureDevice.Position = currentInput.device.position == .back ? .front : .back
-        usingFrontCamera = (newPosition == .front)
-        let preferredTypes: [AVCaptureDevice.DeviceType] = newPosition == .back ?
-            [.builtInTripleCamera, .builtInDualCamera, .builtInWideAngleCamera] :
-            [.builtInTrueDepthCamera, .builtInWideAngleCamera]
+        guard let newDevice = defaultVideoDevice(position: newPosition) else { return }
 
-        guard let newDevice = AVCaptureDevice.DiscoverySession(deviceTypes: preferredTypes, mediaType: .video, position: newPosition).devices.first else {
-            return
-        }
         do {
             session.beginConfiguration()
             session.removeInput(currentInput)
@@ -161,46 +167,71 @@ final class CaptureManager: NSObject, ObservableObject {
             if session.canAddInput(newInput) { session.addInput(newInput) }
             videoDeviceInput = newInput
             selectBestFormatAndFrameRate(device: newDevice)
-            if let connection = videoOutput.connection(with: .video) {
-                connection.videoOrientation = .portrait
-            }
+            configureConnection(videoOutput.connection(with: .video))
             session.commitConfiguration()
-            isLogCompatible = LogCapability.isDeviceLogCapable(activeDevice: newDevice)
+            updateLogCompatibility(for: newDevice)
+            DispatchQueue.main.async { [weak self] in self?.usingFrontCamera = (newPosition == .front) }
             updateActiveResolutionDescription()
         } catch {
+            session.commitConfiguration()
             publishError("Switch camera failed: \(error.localizedDescription)")
         }
     }
 
-    /// Steps: 0.5, 1, 2, 4, 8 â€“ mapped to available zoom range
     func setBackCameraZoomStep(_ step: CGFloat) {
         guard let device = currentVideoDevice, device.position == .back else { return }
-        let minZ = device.minAvailableVideoZoomFactor
-        let maxZ = device.maxAvailableVideoZoomFactor
-
-        // Map nominal step to actual available range
-        let clampedNominal = max(0.5, min(8.0, step))
-        let mapped = max(minZ, min(maxZ, clampedNominal))
-
+        let minZoom = device.minAvailableVideoZoomFactor
+        let maxZoom = device.maxAvailableVideoZoomFactor
+        let clamped = max(minZoom, min(maxZoom, step))
         do {
             try device.lockForConfiguration()
-            device.ramp(toVideoZoomFactor: mapped, withRate: 5.0)
+            device.ramp(toVideoZoomFactor: clamped, withRate: 5.0)
             device.unlockForConfiguration()
         } catch {
             // ignore
         }
     }
 
+    // MARK: - Orientation
+    func updateVideoOrientation(_ orientation: AVCaptureVideoOrientation) {
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            self.currentOrientation = orientation
+            self.configureConnection(self.videoOutput.connection(with: .video))
+        }
+    }
+
+    private func configureConnection(_ connection: AVCaptureConnection?) {
+        guard let connection else { return }
+        if connection.isVideoOrientationSupported {
+            connection.videoOrientation = currentOrientation
+        }
+        if connection.isVideoMirroringSupported {
+            connection.isVideoMirrored = false
+        }
+        if connection.isVideoStabilizationSupported {
+            let modes = connection.availableVideoStabilizationModes
+            if #available(iOS 13.0, *), modes.contains(.cinematicExtended) {
+                connection.preferredVideoStabilizationMode = .cinematicExtended
+            } else if modes.contains(.cinematic) {
+                connection.preferredVideoStabilizationMode = .cinematic
+            } else if modes.contains(.standard) {
+                connection.preferredVideoStabilizationMode = .standard
+            } else {
+                connection.preferredVideoStabilizationMode = .off
+            }
+        }
+    }
+
+    // MARK: - Formats & metadata
     private func selectBestFormatAndFrameRate(device: AVCaptureDevice) {
         do { try device.lockForConfiguration() } catch { return }
         defer { device.unlockForConfiguration() }
 
-        // Choose 4K (3840x2160) if available, else highest resolution 16:9
         var bestFormat: AVCaptureDevice.Format?
         var bestDimensions = CMVideoDimensions(width: 0, height: 0)
         for format in device.formats {
-            let desc = format.formatDescription
-            let dims = CMVideoFormatDescriptionGetDimensions(desc)
+            let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
             if dims.width == 3840 && dims.height == 2160 {
                 bestFormat = format
                 bestDimensions = dims
@@ -214,23 +245,20 @@ final class CaptureManager: NSObject, ObservableObject {
 
         if let chosen = bestFormat {
             device.activeFormat = chosen
-
-            // Choose a common frame rate (30 fps) if supported
             if let range = chosen.videoSupportedFrameRateRanges.first,
-               range.minFrameRate <= 30 && range.maxFrameRate >= 30 {
-                device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
-                device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
+               range.minFrameRate <= 30, range.maxFrameRate >= 30 {
+                let duration = CMTime(value: 1, timescale: 30)
+                device.activeVideoMinFrameDuration = duration
+                device.activeVideoMaxFrameDuration = duration
             }
-
-            // HDR: if running iOS 17+, disable automatic HDR before forcing the HDR flag.
             if #available(iOS 17.0, *) {
                 if chosen.isVideoHDRSupported {
-                    // If you want the system to continue to decide, DO NOT change these properties.
-                    // If you want to force HDR on/off, first turn off automatic adjustment:
                     device.automaticallyAdjustsVideoHDREnabled = false
                     device.isVideoHDREnabled = true
+                    if chosen.supportedColorSpaces.contains(.HLG_BT2020) {
+                        device.activeColorSpace = .HLG_BT2020
+                    }
                 } else {
-                    // Ensure automatic control is enabled if chosen format doesn't support HDR
                     device.automaticallyAdjustsVideoHDREnabled = true
                     device.isVideoHDREnabled = false
                 }
@@ -238,14 +266,24 @@ final class CaptureManager: NSObject, ObservableObject {
         }
     }
 
-    
+    private func updateLogCompatibility(for device: AVCaptureDevice) {
+        let compatible = LogCapability.isDeviceLogCapable(activeDevice: device)
+        DispatchQueue.main.async { [weak self] in self?.isLogCompatible = compatible }
+    }
+
     private func updateActiveResolutionDescription() {
-        guard let device = currentVideoDevice else { return }
-        let dims = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
+        guard let dims = currentVideoDimensions() else { return }
         DispatchQueue.main.async { [weak self] in
-            self?.activeResolutionDescription = "\(dims.width)Ã—\(dims.height)"
+            self?.activeResolutionDescription = "\(dims.width)×\(dims.height)"
         }
     }
+
+    func currentVideoDimensions() -> CMVideoDimensions? {
+        guard let device = currentVideoDevice else { return nil }
+        return CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
+    }
+
+    private var currentVideoDevice: AVCaptureDevice? { videoDeviceInput?.device }
 
     private func publishError(_ message: String) {
         DispatchQueue.main.async { [weak self] in
@@ -263,4 +301,5 @@ extension CaptureManager: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptur
         }
     }
 }
+
 
