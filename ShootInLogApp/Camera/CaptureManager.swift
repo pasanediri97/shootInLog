@@ -9,6 +9,7 @@ final class CaptureManager: NSObject, ObservableObject {
     @Published var isSessionRunning: Bool = false
     @Published var isRecording: Bool = false
     @Published var isLogCompatible: Bool = false
+    @Published var activeResolutionDescription: String = ""
     @Published var errorMessage: String?
     @Published var usingFrontCamera: Bool = false
 
@@ -206,19 +207,11 @@ final class CaptureManager: NSObject, ObservableObject {
         if connection.isVideoMirroringSupported {
             connection.isVideoMirrored = usingFrontCamera
         }
-        let targetFrameDuration = CMTime(value: 1, timescale: 30)
-        connection.videoMinFrameDuration = targetFrameDuration
-        connection.videoMaxFrameDuration = targetFrameDuration
         if connection.isVideoStabilizationSupported {
-            let modes = connection.availableVideoStabilizationModes
-            if #available(iOS 13.0, *), modes.contains(.cinematicExtended) {
+            if #available(iOS 13.0, *) {
                 connection.preferredVideoStabilizationMode = .cinematicExtended
-            } else if modes.contains(.cinematic) {
-                connection.preferredVideoStabilizationMode = .cinematic
-            } else if modes.contains(.standard) {
-                connection.preferredVideoStabilizationMode = .standard
             } else {
-                connection.preferredVideoStabilizationMode = .off
+                connection.preferredVideoStabilizationMode = .cinematic
             }
         }
     }
