@@ -1,4 +1,4 @@
-﻿import AVFoundation
+import AVFoundation
 import Combine
 import CoreMedia
 import UIKit
@@ -9,7 +9,6 @@ final class CaptureManager: NSObject, ObservableObject {
     @Published var isSessionRunning: Bool = false
     @Published var isRecording: Bool = false
     @Published var isLogCompatible: Bool = false
-            self?.activeResolutionDescription = "\(dims.width)�\(dims.height)"
     @Published var errorMessage: String?
     @Published var usingFrontCamera: Bool = false
 
@@ -275,7 +274,7 @@ final class CaptureManager: NSObject, ObservableObject {
     private func updateActiveResolutionDescription() {
         guard let dims = currentVideoDimensions() else { return }
         DispatchQueue.main.async { [weak self] in
-            self?.activeResolutionDescription = "\(dims.width)�\(dims.height)"
+            self?.activeResolutionDescription = "\(dims.width)x\(dims.height)"
         }
     }
 
