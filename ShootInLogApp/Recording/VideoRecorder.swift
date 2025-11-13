@@ -43,12 +43,19 @@ final class VideoRecorder {
         ]
         
         // ProRes compression settings
-        videoSettings[AVVideoCompressionPropertiesKey] = [
-            AVVideoAverageBitRateKey: 100_000_000, // Higher bitrate for ProRes
-            AVVideoAllowFrameReorderingKey: false,
-            AVVideoMaxKeyFrameIntervalKey: 30,
-            AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel
-        ]
+        // Note: ProRes is an intra-frame codec, so many H.264 properties don't apply
+        // Only set properties that ProRes actually supports
+        if preferredCodec == .proRes422HQ || preferredCodec == .proRes4444 {
+            // ProRes doesn't need compression properties - it's already optimized
+            // Don't set MaxKeyFrameInterval, ProfileLevel, etc. as they're H.264-specific
+        } else {
+            // For other codecs like HEVC/H.264, set compression properties
+            videoSettings[AVVideoCompressionPropertiesKey] = [
+                AVVideoAverageBitRateKey: 60_000_000,
+                AVVideoAllowFrameReorderingKey: false,
+                AVVideoMaxKeyFrameIntervalKey: 30
+            ]
+        }
 
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
         vIn.expectsMediaDataInRealTime = true
