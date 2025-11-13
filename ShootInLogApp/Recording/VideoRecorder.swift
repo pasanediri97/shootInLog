@@ -37,17 +37,11 @@ final class VideoRecorder {
             AVVideoTransferFunctionKey: AVVideoTransferFunction_Linear,
             AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_2020
         ]
-        var compression: [String: Any] = [
+        videoSettings[AVVideoCompressionPropertiesKey] = [
             AVVideoAverageBitRateKey: 60_000_000,
             AVVideoAllowFrameReorderingKey: false,
             AVVideoMaxKeyFrameIntervalKey: 30
         ]
-        if #available(iOS 13.0, *) {
-            compression[AVVideoProfileLevelKey] = AVVideoProfileLevelHEVCMain10AutoLevel
-        } else {
-            compression[AVVideoProfileLevelKey] = AVVideoProfileLevelHEVCMainAutoLevel
-        }
-        videoSettings[AVVideoCompressionPropertiesKey] = compression
 
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
         vIn.expectsMediaDataInRealTime = true
